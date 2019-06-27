@@ -17,11 +17,15 @@ Build the sources:
 	
 Run the app
 
-	java -jar java-poc-opencv-0.0.1-SNAPSHOT.jar	
+	java -Xmx500M -jar java-poc-opencv-0.0.1-SNAPSHOT.jar	
 
 Browse to:
 
 	http://localhost:8085
+	
+## Run it as a background task
+
+	nohup java -Xmx500M -jar java-poc-opencv-0.0.1-SNAPSHOT.jar 2>&1 >/dev/null &	
 
 	
 ## Build OpenCV on raspberry pi
