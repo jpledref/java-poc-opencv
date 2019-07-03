@@ -10,8 +10,10 @@ import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
+import org.opencv.objdetect.Objdetect;
 import org.opencv.videoio.VideoCapture;
 import com.enums.Extension;
 import com.utils.Utils;
@@ -33,6 +35,7 @@ public class App {
 	private static HttpStreamServer httpStreamService;
 	static VideoCapture videoCapture;
 	static Timer tmrVideoProcess;
+	static int absoluteFaceSize;
 	// endregion
 	
 	public static void main(String[] args) throws InterruptedException {
@@ -111,6 +114,23 @@ public class App {
 	public static void onCameraFrame(Mat inputFrame){
 		// Called by framework with latest frame
 		try {
+			
+			Mat grayFrame = inputFrame.clone();
+			// convert the frame in gray scale
+			Imgproc.cvtColor(frame, grayFrame, Imgproc.COLOR_BGR2GRAY);
+			// equalize the frame histogram to improve the result
+			Imgproc.equalizeHist(grayFrame, grayFrame);
+			
+			// set minimum size of the face
+			if (absoluteFaceSize == 0)
+			{
+			    int height = grayFrame.rows();
+			    if (Math.round(height * 0.2f) > 0)
+			    {
+			            absoluteFaceSize = Math.round(height * 0.2f);
+			    }
+			}			
+			
 			//String catHaarPath = FSProvider.getInstance().getCurrentPathNormalizedPath() + File.separator+"haarcascade_frontalcatface_extended.xml";
 			String faceHaarPath = FSProvider.getInstance().getCurrentPathNormalizedPath() + File.separator+"haarcascade_frontalface_alt.xml";
 			//CascadeClassifier cascadeCat = new CascadeClassifier(catHaarPath);
@@ -120,11 +140,12 @@ public class App {
 			//CAT
 			/*MatOfRect catFaceDetections = new MatOfRect();
 			if(!inputFrame.empty())
-				cascadeCat.detectMultiScale(inputFrame, catFaceDetections);*/
+				cascadeCat.detectMultiScale(grayFrame, catFaceDetections,1.1, 2, 0 | Objdetect.CASCADE_SCALE_IMAGE, new Size(absoluteFaceSize, absoluteFaceSize), new Size());
+			*/
 			//FACE
 			MatOfRect faceDetections = new MatOfRect();
 			if(!inputFrame.empty())
-				cascadeFace.detectMultiScale(inputFrame, faceDetections);
+				cascadeFace.detectMultiScale(grayFrame, faceDetections,1.1, 2, 0 | Objdetect.CASCADE_SCALE_IMAGE, new Size(absoluteFaceSize, absoluteFaceSize), new Size());
 			
 			//## Frame results			
 			/*for (Rect rect : catFaceDetections.toArray()) {
@@ -135,9 +156,9 @@ public class App {
 			}*/
 			for (Rect rect : faceDetections.toArray()) {
 				Imgproc.rectangle(inputFrame, new Point(rect.x, rect.y),
-						new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(255, 0, 0));
+						new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(255, 0, 0),2);
 				String faceTxt="face";//"("+rect.x+","+rect.y+")";
-				Imgproc.putText(inputFrame, faceTxt, new Point(rect.x, rect.y), Font.BOLD, 2, new Scalar(0, 0, 255));
+				Imgproc.putText(inputFrame, faceTxt, new Point(rect.x, rect.y), Font.BOLD, 2, new Scalar(0, 0, 255),2);
 			}			
 			
 			//## Output
@@ -151,7 +172,7 @@ public class App {
 			//if(catFaceDetections.toArray().length>0||faceDetections.toArray().length>0) {
 			if(faceDetections.toArray().length>0) {
 				System.out.println(strOutput);
-			}			
+			}		
 			
 			//Dirty Fix for OpenCV memory leak
 			System.gc();
