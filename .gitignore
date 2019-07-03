@@ -59,4 +59,5 @@ bin
 log/*
 
 # App-specific
+*faceDetection.png
 faceDetection.png

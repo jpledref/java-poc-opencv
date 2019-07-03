@@ -25,7 +25,7 @@ Browse to:
 	
 ## Run it as a background task
 
-	nohup java -Xmx500M -jar java-poc-opencv-0.0.1-SNAPSHOT.jar 2>&1 >/dev/null &	
+	nohup java -Xms50m -Xmx200m -jar java-poc-opencv-0.0.1-SNAPSHOT.jar 2>&1 >/dev/null &	
 
 	
 ## Build OpenCV on raspberry pi
@@ -35,4 +35,8 @@ Browse to:
 	cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local -D BUILD_EXAMPLES=OFF ..
 	make
 
+
+## Missing OpenCV dependency with Maven
+
+	mvn install:install-file -DgroupId=org.openpnp -DartifactId=opencv -Dversion=4.1.0 -Dpackaging=jar -Dfile=${basedir}/src/main/resources/opencv-410.jar -DgeneratePom=true
 	

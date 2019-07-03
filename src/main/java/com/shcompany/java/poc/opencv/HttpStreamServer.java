@@ -64,17 +64,18 @@ public class HttpStreamServer implements Runnable {
 
 
     public void run() {
-        try {
-            System.out.print("go to  http://localhost:8085 with browser");
-            startStreamingServer();
-
-            while (true) {
-                pushImage(imag);
-            }
-        } catch (IOException e) {
-            return;
-        }
-
+    	while (true) {
+	        try {
+	        	System.out.print("go to  http://localhost:8085 with browser");
+	            startStreamingServer();
+	
+	            while (true) {
+	                pushImage(imag);
+	            }
+	        } catch (IOException e) {
+	            return;
+	        }
+    	}
     }
 
     public void stopStreamingServer() throws IOException {
