@@ -25,7 +25,7 @@ Browse to:
 	
 ## Run it as a background task
 
-	nohup java -Xms50m -Xmx200m -jar java-poc-opencv-0.0.1-SNAPSHOT.jar 2>&1 >/dev/null &	
+	nohup java -Xss128m -Xms50m -Xmx200m -jar java-poc-opencv-0.0.1-SNAPSHOT.jar 2>&1 >/dev/null &	
 
 	
 ## Build OpenCV on raspberry pi

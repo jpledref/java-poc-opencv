@@ -3,14 +3,17 @@ package com.shcompany.java.poc.opencv;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.imgcodecs.Imgcodecs;
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HttpStreamServer implements Runnable {
+	static Logger LOG = LoggerFactory.getLogger(HttpStreamServer.class);
 
     private BufferedImage img = null;
     private ServerSocket serverSocket;
@@ -70,7 +73,11 @@ public class HttpStreamServer implements Runnable {
 	            startStreamingServer();
 	
 	            while (true) {
+	            	long start = System.currentTimeMillis();
 	                pushImage(imag);
+	                long finish = System.currentTimeMillis();
+	    			long timeElapsed = finish - start;			
+	    			LOG.debug("c:"+timeElapsed+"ms");
 	            }
 	        } catch (IOException e) {
 	            return;
