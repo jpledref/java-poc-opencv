@@ -19,6 +19,7 @@ import org.opencv.videoio.Videoio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.enums.APPOptions;
 import com.enums.Extension;
 import com.utils.Utils;
 import javax.swing.*;
@@ -49,9 +50,17 @@ public class App {
 		// Prepare java.library.path
 		// Copy over opencv_javaXXX if not present
 		prepareLib();
+		
+		//Loading Config
+		loadConfig();
 
 		// Start Streaming to port 8085
 		startStream();
+	}
+	
+	private static void loadConfig(){
+		// Properties loaded at start using reflection to Constant class.
+		ConfigProvider.getInstance().printConfig();		
 	}
 
 	private static void prepareLib() {
@@ -94,10 +103,9 @@ public class App {
 		videoCapture = new VideoCapture();
 
 		videoCapture.open(0);
-
-		videoCapture.set(Videoio.CAP_PROP_FRAME_WIDTH, 640);
-		videoCapture.set(Videoio.CAP_PROP_FRAME_HEIGHT, 480);
-		videoCapture.set(Videoio.CAP_PROP_FPS, 10);
+		videoCapture.set(Videoio.CAP_PROP_FRAME_WIDTH, APPOptions.frameWidth);
+		videoCapture.set(Videoio.CAP_PROP_FRAME_HEIGHT, APPOptions.frameHeight);
+		videoCapture.set(Videoio.CAP_PROP_FPS, APPOptions.frameFPS);
 
 		if (!videoCapture.isOpened()) {
 			return;
@@ -115,7 +123,7 @@ public class App {
 					try {
 						videoCapture.read(frame);
 
-						if (frameSh == null) {
+						if (frameSh == null && APPOptions.useGhosting) {
 							for (Rect rect : faceDetections.toArray()) {
 								/*
 								 * Imgproc.rectangle(inputFrame, new Point(rect.x, rect.y), new Point(rect.x +
@@ -123,9 +131,11 @@ public class App {
 								 */
 								Imgproc.rectangle(frame, new Point(rect.x, rect.y),
 										new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(255, 0, 0), 2);
-								String faceTxt = "face";// "("+rect.x+","+rect.y+")";
-								Imgproc.putText(frame, faceTxt, new Point(rect.x, rect.y), Font.BOLD, 2,
-										new Scalar(255, 0, 0), 2);
+								if(APPOptions.showLabels){
+									String faceTxt = "face";// "("+rect.x+","+rect.y+")";
+									Imgproc.putText(frame, faceTxt, new Point(rect.x, rect.y), Font.BOLD, 2,
+											new Scalar(255, 0, 0), 2);
+								}
 							}
 
 							httpStreamService.imag = frame;
@@ -160,7 +170,7 @@ public class App {
 
 					long finish = System.currentTimeMillis();
 					long timeElapsed = finish - start;
-					LOG.info("b:" + timeElapsed + "ms");
+					if(APPOptions.showDetectionTime)LOG.info("DetectionTime: " + timeElapsed + "ms");
 				}
 			}
 		};
@@ -173,20 +183,26 @@ public class App {
 		try {
 			Mat grayFrame = inputFrame.clone();
 			// convert the frame in gray scale
-			Imgproc.cvtColor(frame, grayFrame, Imgproc.COLOR_BGR2GRAY);
+			
+			try {
+				Imgproc.cvtColor(frame, grayFrame, Imgproc.COLOR_BGR2GRAY);
+			} catch (Exception e) {
+				// TODO: handle exception
+			}			
+			
 			// equalize the frame histogram to improve the result
 			Imgproc.equalizeHist(grayFrame, grayFrame);
 
 			// set minimum size of the face
 			if (absoluteFaceSize == 0) {
 				int height = grayFrame.rows();
-				if (Math.round(height * 0.05f) > 0) {
-					absoluteFaceSize = Math.round(height * 0.05f);
+				if (Math.round(height * 0.2f) > 0) {
+					absoluteFaceSize = Math.round(height * 0.2f);
 				}
 			}
 			
 			String faceHaarPath = FSProvider.getInstance().getCurrentPathNormalizedPath() + File.separator
-					+ "haarcascade_frontalface_alt2.xml";
+					+ APPOptions.haarCascadeFile;
 			CascadeClassifier cascadeFace = new CascadeClassifier(faceHaarPath);
 
 			// ## Detection			
@@ -200,17 +216,21 @@ public class App {
 			for (Rect rect : faceDetections.toArray()) {
 				Imgproc.rectangle(inputFrame, new Point(rect.x, rect.y),
 						new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(255, 0, 0), 2);
-				String faceTxt = "face";// "("+rect.x+","+rect.y+")";
-				Imgproc.putText(inputFrame, faceTxt, new Point(rect.x, rect.y), Font.BOLD, 2, new Scalar(255, 0, 0), 2);
+				if(APPOptions.showLabels){
+					String faceTxt = "face";// "("+rect.x+","+rect.y+")";
+					Imgproc.putText(inputFrame, faceTxt, new Point(rect.x, rect.y), Font.BOLD, 2, new Scalar(255, 0, 0), 2);
+				}
 			}
 
 			// ## Output
-			StringBuilder strOutput = new StringBuilder("Detected: ");
-			if (faceDetections.toArray().length > 0) {
-				strOutput.append(String.format("\n - %s faces", faceDetections.toArray().length));
-			}			
-			if (faceDetections.toArray().length > 0) {
-				LOG.info(strOutput.toString());
+			if(APPOptions.showDetectedItems) {
+				StringBuilder strOutput = new StringBuilder("Detected: ");
+				if (faceDetections.toArray().length > 0) {
+					strOutput.append(String.format("\n - %s faces", faceDetections.toArray().length));
+				}			
+				if (faceDetections.toArray().length > 0) {
+					LOG.info(strOutput.toString());
+				}
 			}
 
 			// Dirty Fix for OpenCV memory leak

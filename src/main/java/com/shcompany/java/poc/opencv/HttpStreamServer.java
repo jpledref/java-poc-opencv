@@ -12,6 +12,8 @@ import java.net.Socket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.enums.APPOptions;
+
 public class HttpStreamServer implements Runnable {
 	static Logger LOG = LoggerFactory.getLogger(HttpStreamServer.class);
 
@@ -27,7 +29,7 @@ public class HttpStreamServer implements Runnable {
     }
 
     public void startStreamingServer() throws IOException {
-        serverSocket = new ServerSocket(8085);
+        serverSocket = new ServerSocket(APPOptions.serverPort);
         socket = serverSocket.accept();
         writeHeader(socket.getOutputStream(), boundary);
     }
